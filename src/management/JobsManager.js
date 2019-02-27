@@ -57,6 +57,19 @@ var JobsManager = function(options) {
     options.tokenProvider
   );
   this.jobs = new RetryRestClient(auth0RestClient, options.retry);
+
+  /**
+   * Provides an abstraction layer for consuming the
+   * {@link https://auth0.com/docs/api/v2#!/Jobs/get_results Job results endpoint}
+   *
+   * @type {external:RestClient}
+   */
+  var jobResultsAuth0RestClient = new Auth0RestClient(
+    options.baseUrl + '/jobs/:id/results',
+    clientOptions,
+    options.tokenProvider
+  );
+  this.jobResults = new RetryRestClient(jobResultsAuth0RestClient, options.retry);
 };
 
 /**
@@ -96,6 +109,44 @@ JobsManager.prototype.get = function(params, cb) {
 
   // Return a promise.
   return this.jobs.get(params);
+};
+
+/**
+ * Get the results of a job by its ID.
+ *
+ * @method   get
+ * @memberOf module:management.JobsManager.prototype
+ *
+ * @example
+ * var params = {
+ *   id: '{JOB_ID}'
+ * }
+ *
+ * management.jobs.results(params, function (err, results) {
+ *   if (err) {
+ *     // Handle error.
+ *   }
+ *
+ *   // Retrieved job.
+ *   console.log(results);
+ * });
+ *
+ * @param   {Object}    params        Job parameters.
+ * @param   {String}    params.id     Job ID.
+ * @param   {Function}  [cb]          Callback function.
+ *
+ * @return  {Promise|undefined}
+ */
+JobsManager.prototype.results = function(params, cb) {
+  if (!params.id || typeof params.id !== 'string') {
+    throw new ArgumentError('The id parameter must be a valid job id');
+  }
+
+  if (cb && cb instanceof Function) {
+    return this.jobResults.get(params, cb);
+  }
+
+  return this.jobResults.get(params, cb);
 };
 
 /**
